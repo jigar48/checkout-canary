@@ -1,17 +1,27 @@
 """Command line entry point.
 
 Exit codes: 0 = journey passed, 1 = journey failed, 2 = bad usage, invalid journey file, or the
-browser could not be started.
+browser could not be started. Alerts never change the exit code.
+
+Optional failure alerts via environment variables: CHECKOUT_CANARY_TELEGRAM_TOKEN and
+CHECKOUT_CANARY_TELEGRAM_CHAT_ID.
 """
 
 import argparse
+import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from playwright.sync_api import Error as PlaywrightError
 
 from checkout_canary import __version__
+from checkout_canary.alerts import (
+    FailureAlert,
+    notifiers_from_env,
+    run_url_from_env,
+    send_alerts,
+)
 from checkout_canary.journey import JourneyError, load_journey
 from checkout_canary.results import RunResult
 from checkout_canary.runner import RESULT_FILE, run_journey
@@ -59,7 +69,22 @@ def print_report(result: RunResult, output_dir: Path) -> None:
         )
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def alert_on_failure(result: RunResult, env: Mapping[str, str]) -> None:
+    """Send failure alerts. Prints what happened; never raises and never changes the exit code."""
+    try:
+        notifiers, notes = notifiers_from_env(env)
+        lines = list(notes)
+        if notifiers:
+            alert = FailureAlert.from_result(result, run_url_from_env(env))
+            lines += send_alerts(notifiers, alert)
+    except Exception as exc:  # noqa: BLE001 - alerts are best effort
+        lines = [f"Alerts skipped because of an internal error: {type(exc).__name__}"]
+    for line in lines:
+        print(line)
+
+
+def main(argv: Sequence[str] | None = None, env: Mapping[str, str] | None = None) -> int:
+    env = os.environ if env is None else env
     args = build_parser().parse_args(argv)
     try:
         journey = load_journey(args.journey, base_url=args.base_url)
@@ -76,4 +101,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 2
     print_report(result, args.output_dir)
+    if not result.passed:
+        alert_on_failure(result, env)
     return 0 if result.passed else 1
