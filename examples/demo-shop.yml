@@ -1,5 +1,5 @@
 # Walks the local fixture shop. Start it first (see README quickstart):
-#   python -m http.server 8000 --directory tests/fixtures/shop/ok
+#   python -m http.server 8000 --bind 127.0.0.1 --directory tests/fixtures/shop/ok
 name: Demo shop checkout
 base_url: http://127.0.0.1:8000
 timeout_ms: 3000
