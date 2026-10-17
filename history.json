@@ -1,0 +1,13 @@
+{
+  "runs": [
+    {
+      "id": "20261017T203520Z",
+      "started_at": "2026-10-17T20:35:20+00:00",
+      "passed": false,
+      "duration_ms": 748,
+      "detail": "Stopped at step 1 of 12, while opening index.html: page returned HTTP 404 for https://jigar48.github.io/checkout-canary/demo-shop/index.html",
+      "run_url": "https://github.com/jigar48/checkout-canary/actions/runs/39067305521",
+      "screenshot": "20261017T203520Z.png"
+    }
+  ]
+}
