@@ -10,7 +10,7 @@ yourself. checkout-canary aims to be a free, self-hosted, packaged option that n
 own and produces owner-readable output. I have not proven that nothing similar exists.
 
 > **Status: early development (pre-alpha, version 0.1.0).** This README describes only what works
-> today. Not built yet: alerts, scheduled runs, a status page, Magento/WooCommerce presets, retries.
+> today. Not built yet: scheduled runs, a status page, a WooCommerce preset, retries, Slack/email alerts.
 
 ## Responsible use
 
@@ -132,6 +132,47 @@ steps:
 against the bundled fake shop.) Mistakes are reported with the step number and field, for example
 `step 2 > fill > value: Field required`.
 
+## Failure alerts (Telegram)
+
+When a journey fails, checkout-canary can send a short plain-English message through the Telegram Bot
+API (`sendMessage`, [docs](https://core.telegram.org/bots/api#sendmessage)). It is off unless both
+environment variables are set:
+
+| Variable | Value |
+| --- | --- |
+| `CHECKOUT_CANARY_TELEGRAM_TOKEN` | Bot token from [@BotFather](https://core.telegram.org/bots#how-do-i-create-a-bot) |
+| `CHECKOUT_CANARY_TELEGRAM_CHAT_ID` | Chat, group or channel ID the bot may write to |
+
+```bash
+export CHECKOUT_CANARY_TELEGRAM_TOKEN="..."      # never commit this
+export CHECKOUT_CANARY_TELEGRAM_CHAT_ID="..."
+checkout-canary run my-journey.yml
+```
+
+The message contains the journey name, the step that failed in plain words, the reason, the time (UTC)
+and, when running in GitHub Actions, a link to the run. It never contains fill values or secrets.
+Alerts are best effort: if sending fails, the problem is printed (with the token redacted) and the exit
+code is still the journey's own (1). Alerts are sent only on failure.
+
+The alert code uses a small `Notifier` interface (`src/checkout_canary/alerts.py`), so other channels
+can be added later. Only Telegram exists today. The tests use a fake local Telegram server; the real
+Telegram API has not been called from the test suite. A real message has not been sent yet either, so
+treat the Telegram integration as unproven against Telegram itself until you try it with your bot.
+
+## Presets
+
+Ready-made journeys live in [`presets/`](presets). Copy one, set `base_url` to a store you own, and run it.
+
+| Preset | Status |
+| --- | --- |
+| [`presets/magento2.yml`](presets/magento2.yml) | **Experimental, not verified against a live store.** Home, first product, add to cart, cart, checkout shipping step (stops before payment). Selectors come from the public `magento/magento2` templates and are tested only against a local fixture imitating that markup (`tests/fixtures/magento2`). |
+
+```bash
+cp presets/magento2.yml my-store.yml
+# edit base_url in my-store.yml, then:
+checkout-canary run my-store.yml
+```
+
 ## Development
 
 ```bash
@@ -146,11 +187,11 @@ Tests start the fake shop on a local port and need no internet. CI runs the same
 ## Known limits
 
 - Chromium only, headless, one viewport (1280x800).
-- One journey per file; no retries; no alerts; no scheduling.
+- One journey per file; no retries; no scheduling yet; Telegram is the only alert channel.
 - Tested on Python 3.12 only (Linux in CI, Windows locally).
 - Failure messages are plain-language for the common cases (element not found, text not shown, HTTP
   error). Other Playwright errors are shown shortened.
-- Only the bundled fake shop has been tested. No real store has been tested.
+- Only local fixtures (the fake shop and the Magento-style fixture) have been tested. No real store has been tested.
 
 ## License
 

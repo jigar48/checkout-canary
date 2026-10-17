@@ -33,6 +33,21 @@ class RunResult(BaseModel):
     evidence: Evidence
 
 
+_PLAIN = {
+    "goto": "opening {target}",
+    "click": "clicking {target}",
+    "fill": "typing into {target}",
+    "expect_text": "checking that {target}",
+    "expect_visible": "waiting for {target} to appear",
+    "screenshot": "taking the screenshot '{target}'",
+}
+
+
+def plain_description(action: str, target: str) -> str:
+    """Owner-readable description of a step, e.g. 'clicking #checkout-button'."""
+    return _PLAIN.get(action, "{action} {target}").format(action=action, target=target)
+
+
 def build_summary(journey: str, steps: list[StepResult]) -> str:
     failed = next((step for step in steps if step.status == "failed"), None)
     if failed is None:
