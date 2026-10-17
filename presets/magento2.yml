@@ -1,0 +1,35 @@
+# EXPERIMENTAL: Magento 2 (Luma theme) checkout journey. Not verified against a live store.
+#
+# What it covers: home page -> first product -> add to cart -> cart -> checkout page (shipping step).
+# It stops there. It never fills payment details and never places an order.
+#
+# How the selectors were chosen: from the templates in the public magento/magento2 repository
+# (2.4-develop), for example #product-addtocart-button, [data-role=proceed-to-checkout],
+# #shopping-cart-table, .message-success, #checkout and #checkout-step-shipping.
+# The journey is tested only against the local fixture in tests/fixtures/magento2, which imitates
+# that markup. Real stores differ (custom themes, extensions, cached pages), so expect to edit.
+#
+# How to use:
+#   1. Copy this file and set base_url to a store YOU OWN or have written permission to test.
+#   2. The first product on the home page must be a simple product (no options to choose).
+#      If your home page lists no products, replace the click with a goto to a simple product URL,
+#      for example:  - goto: /your-simple-product.html
+#   3. Run:  checkout-canary run my-store.yml
+#      (or keep base_url as is and pass --base-url https://your-store.example)
+name: Magento 2 checkout (experimental)
+base_url: https://your-store.example.com
+timeout_ms: 15000
+steps:
+  - goto: /
+  - expect_visible: ".minicart-wrapper"
+  - click: ".product-item-link >> nth=0"
+  - expect_visible: "#product-addtocart-button"
+  - click: "#product-addtocart-button"
+  - expect_visible: ".message-success"
+  - goto: /checkout/cart/
+  - expect_visible: "#shopping-cart-table"
+  - screenshot: cart
+  - expect_visible: "button[data-role='proceed-to-checkout']"
+  - click: "button[data-role='proceed-to-checkout']"
+  - expect_visible: "#checkout-step-shipping"
+  - screenshot: checkout
