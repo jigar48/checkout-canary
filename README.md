@@ -10,7 +10,7 @@ yourself. checkout-canary aims to be a free, self-hosted, packaged option that n
 own and produces owner-readable output. I have not proven that nothing similar exists.
 
 > **Status: early development (pre-alpha, version 0.1.0).** This README describes only what works
-> today. Not built yet: scheduled runs, a status page, a WooCommerce preset, retries, Slack/email alerts.
+> today. Not built yet: a WooCommerce preset, retries, Slack/email alerts.
 
 ## Responsible use
 
@@ -173,6 +173,28 @@ cp presets/magento2.yml my-store.yml
 checkout-canary run my-store.yml
 ```
 
+## Scheduled runs and the status page
+
+`.github/workflows/monitor.yml` runs a journey every 30 minutes on GitHub Actions, keeps the last 90
+runs, and publishes a plain-language green/red status page (last check time, last 30 runs, failure
+screenshot) to GitHub Pages. It monitors a **demo shop** (a fake store that the same workflow
+publishes), so the page is a live example. **It only works after the pull requests are merged and
+Pages is enabled**; the manual steps are in [docs/scheduling.md](docs/scheduling.md).
+
+Honest limits: GitHub runs scheduled workflows on a best-effort basis (they can be late or dropped),
+and disables them in public repositories after 60 days without repository activity. Sources are in
+[docs/scheduling.md](docs/scheduling.md). The workflow has not run on GitHub yet; its Python parts are
+tested locally (`checkout-canary status update`), but the workflow file itself is untested until it
+runs for the first time after merge.
+
+The status page can also be built by hand:
+
+```bash
+checkout-canary run my-journey.yml --output-dir results
+checkout-canary status update --result results/result.json --data-dir status-data --site-dir site
+# open site/index.html
+```
+
 ## Development
 
 ```bash
@@ -187,7 +209,7 @@ Tests start the fake shop on a local port and need no internet. CI runs the same
 ## Known limits
 
 - Chromium only, headless, one viewport (1280x800).
-- One journey per file; no retries; no scheduling yet; Telegram is the only alert channel.
+- One journey per file; no retries; Telegram is the only alert channel.
 - Tested on Python 3.12 only (Linux in CI, Windows locally).
 - Failure messages are plain-language for the common cases (element not found, text not shown, HTTP
   error). Other Playwright errors are shown shortened.
