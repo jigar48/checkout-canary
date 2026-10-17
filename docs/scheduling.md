@@ -50,6 +50,7 @@ Site layout: `/` is the status page, `/demo-shop/` is the demo shop.
   force-pushed or rewritten.
 - If the journey cannot start at all (invalid journey, Chromium missing) no history entry is
   written; the run is red and the page keeps showing the previous result.
+- **Runner image is pinned to `ubuntu-24.04`.** GitHub is moving the `ubuntu-latest` label to Ubuntu 26.04 in a rollout that begins 2026-10-19 and should finish by 2026-11-19 ([announcement](https://github.com/actions/runner-images/issues/14748)); the workflows stay on 24.04 until Playwright's support for Ubuntu 26.04 has been verified.
 
 ## Sources
 
