@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simple Hoodie</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+.page-header{display:flex;justify-content:space-between;border-bottom:1px solid #ccc;padding-bottom:.5rem}
+.action.primary{background:#1979c3;color:#fff;border:0;padding:.6rem 1rem;font-size:1rem;cursor:pointer}
+.message-success{background:#e5efe5;color:#006400;padding:.75rem;margin:1rem 0}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:.5rem;text-align:left}
+.note{background:#fff8c5;padding:.75rem}</style></head><body>
+<div class="page-header"><a href="/">Fixture Magento Store</a>
+<div data-block="minicart" class="minicart-wrapper"><a class="action showcart" href="/checkout/cart/">My Cart</a></div></div>
+<p class="note">Local test fixture imitating Magento 2 Luma markup. Not a real store.</p>
+<h1 class="page-title"><span class="base" data-ui-id="page-title-wrapper">Simple Hoodie</span></h1>
+<div id="messages"></div>
+<form id="product_addtocart_form"><button type="submit" title="Add to Cart" class="action primary tocart" id="product-addtocart-button"><span>Add to Cart</span></button></form>
+<script>
+document.getElementById("product_addtocart_form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  localStorage.setItem("fixture-cart", "1");
+  document.getElementById("messages").innerHTML = "<div class=\"message-success success message\"><div>You added Simple Hoodie to your shopping cart.</div></div>";
+});
+</script>
+</body></html>
