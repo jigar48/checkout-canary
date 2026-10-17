@@ -1,0 +1,33 @@
+# Secrets and local config - never commit these
+.env
+.env.*
+!.env.example
+
+# Run output, traces and local artifacts
+results/
+traces/
+trace*.zip
+test-results/
+playwright-report/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
