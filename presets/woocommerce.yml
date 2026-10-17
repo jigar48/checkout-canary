@@ -1,0 +1,38 @@
+# EXPERIMENTAL: WooCommerce checkout journey (classic shortcode cart and checkout).
+# Not verified against a live store.
+#
+# What it covers: shop page -> first product -> add to cart -> cart -> checkout page up to the
+# payment section. It stops there. It never clicks "Place order" and never fills payment details.
+#
+# How the selectors were chosen: from the classic templates in the public woocommerce/woocommerce
+# repository: button.single_add_to_cart_button, .woocommerce-message, form.woocommerce-cart-form,
+# a.checkout-button, form.woocommerce-checkout and #payment. It is tested only against the local
+# fixture in tests/fixtures/woocommerce, which imitates that markup.
+#
+# IMPORTANT - Cart and Checkout blocks: recent WooCommerce versions use block-based Cart and
+# Checkout pages by default for new stores. Those use different markup (for example
+# .wp-block-woocommerce-cart and .wc-block-cart__submit-button) and this preset will NOT match them.
+# Not tested here; adjust the selectors for your store or switch the pages to the classic shortcodes.
+#
+# How to use:
+#   1. Copy this file and set base_url to a store YOU OWN or have written permission to test.
+#   2. The first product on /shop/ must be a simple product (no options to choose).
+#   3. Run:  checkout-canary run my-store.yml
+name: WooCommerce checkout (experimental)
+base_url: https://your-store.example.com
+timeout_ms: 15000
+steps:
+  - goto: /shop/
+  - expect_visible: "a.woocommerce-LoopProduct-link >> nth=0"
+  - click: "a.woocommerce-LoopProduct-link >> nth=0"
+  - expect_visible: "button.single_add_to_cart_button"
+  - click: "button.single_add_to_cart_button"
+  - expect_visible: ".woocommerce-message"
+  - goto: /cart/
+  - expect_visible: "form.woocommerce-cart-form"
+  - screenshot: cart
+  - expect_visible: "a.checkout-button"
+  - click: "a.checkout-button"
+  - expect_visible: "form.woocommerce-checkout"
+  - expect_visible: "#payment"
+  - screenshot: checkout
