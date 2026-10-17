@@ -42,11 +42,30 @@ def run_preset(preset, fixture_dir, tmp_path):
     return code, json.loads((out / "result.json").read_text(encoding="utf-8")), out
 
 
-MAGENTO = REPO_ROOT / "presets" / "magento2.yml"
+# preset file -> (fixture directory, selector expected to fail in the broken fixture)
+FIXTURE_CASES = {
+    "magento2.yml": ("magento2", ".message-success"),
+    "woocommerce.yml": ("woocommerce", "a.checkout-button"),
+}
 
 
-def test_magento2_preset_passes_on_working_fixture(tmp_path):
-    code, result, out = run_preset(MAGENTO, FIXTURES_DIR / "magento2" / "ok", tmp_path)
+def test_every_preset_has_a_fixture_case():
+    assert {p.name for p in PRESETS} == set(FIXTURE_CASES)
+
+
+@pytest.mark.parametrize("preset", PRESETS, ids=lambda p: p.name)
+def test_preset_never_places_an_order(preset):
+    """Presets must stop before payment: no step may touch place-order or payment fields."""
+    text = preset.read_text(encoding="utf-8").lower()
+    steps = text.split("steps:", 1)[1]
+    for forbidden in ("place_order", "place-order", "card", "cvv", "payment_method"):
+        assert forbidden not in steps
+
+
+@pytest.mark.parametrize("preset", PRESETS, ids=lambda p: p.name)
+def test_preset_passes_on_working_fixture(preset, tmp_path):
+    fixture, _ = FIXTURE_CASES[preset.name]
+    code, result, out = run_preset(preset, FIXTURES_DIR / fixture / "ok", tmp_path)
 
     assert code == 0
     assert result["passed"] is True
@@ -54,11 +73,13 @@ def test_magento2_preset_passes_on_working_fixture(tmp_path):
     assert (out / "screenshots" / "checkout.png").read_bytes().startswith(PNG_MAGIC)
 
 
-def test_magento2_preset_fails_when_add_to_cart_is_broken(tmp_path):
-    code, result, out = run_preset(MAGENTO, FIXTURES_DIR / "magento2" / "broken", tmp_path)
+@pytest.mark.parametrize("preset", PRESETS, ids=lambda p: p.name)
+def test_preset_fails_with_evidence_on_broken_fixture(preset, tmp_path):
+    fixture, failing_target = FIXTURE_CASES[preset.name]
+    code, result, out = run_preset(preset, FIXTURES_DIR / fixture / "broken", tmp_path)
 
     assert code == 1
     failed = next(s for s in result["steps"] if s["status"] == "failed")
-    assert failed["target"] == ".message-success"
+    assert failed["target"] == failing_target
     assert (out / "failure.png").read_bytes().startswith(PNG_MAGIC)
     assert (out / "trace.zip").exists()
