@@ -1,0 +1,27 @@
+# Journey run by the scheduled workflow (.github/workflows/monitor.yml).
+# It monitors the DEMO SHOP: a fake store (tests/fixtures/shop/ok) that the same workflow publishes
+# to GitHub Pages. Paths are relative, so base_url must end with a slash.
+name: Demo shop checkout
+base_url: https://jigar48.github.io/checkout-canary/demo-shop/
+timeout_ms: 15000
+steps:
+  - goto: index.html
+  - expect_text:
+      selector: h1
+      text: Demo Shop
+  - click: "text=Blue Mug"
+  - expect_text:
+      selector: "#product-title"
+      text: Blue Mug
+  - click: "#add-to-cart"
+  - expect_text:
+      selector: h1
+      text: Your cart
+  - screenshot: cart
+  - expect_visible: "#checkout-button"
+  - click: "#checkout-button"
+  - fill:
+      selector: "#email"
+      value: test@example.com
+  - expect_visible: "#payment-step"
+  - screenshot: checkout

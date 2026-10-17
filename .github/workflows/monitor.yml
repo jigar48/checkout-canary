@@ -1,0 +1,143 @@
+name: Monitor demo shop
+
+# Runs the journey on a schedule, keeps run history on the `status-data` branch, builds the
+# static status page and publishes it (plus the demo shop) to GitHub Pages.
+#
+# Scheduled workflows run only from the default branch and on a best-effort basis (they can be
+# late or skipped under load). In public repositories GitHub disables them after 60 days without
+# repository activity. See docs/scheduling.md for the sources.
+
+on:
+  schedule:
+    # Not at the top of the hour: GitHub delays scheduled runs when load is high.
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+    inputs:
+      deploy_only:
+        description: "Only publish the site, do not run the journey (use for the very first run)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # push run history to the status-data branch (never to main)
+    outputs:
+      journey_failed: ${{ steps.canary.outcome == 'failure' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Does the status-data branch exist?
+        id: data_branch
+        run: |
+          if git ls-remote --exit-code --heads origin status-data >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out run history
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.data_branch.outputs.exists == 'true' && 'status-data' || github.sha }}
+          path: status-data
+
+      - name: Start an empty history branch (first run only)
+        if: steps.data_branch.outputs.exists != 'true'
+        run: |
+          git -C status-data checkout --orphan status-data
+          git -C status-data rm -rf -q .
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install checkout-canary and Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m playwright install --with-deps chromium
+
+      - name: Run the demo shop journey
+        id: canary
+        if: ${{ !inputs.deploy_only }}
+        continue-on-error: true
+        env:
+          # Optional. Leave the secrets unset to run without alerts.
+          CHECKOUT_CANARY_TELEGRAM_TOKEN: ${{ secrets.CHECKOUT_CANARY_TELEGRAM_TOKEN }}
+          CHECKOUT_CANARY_TELEGRAM_CHAT_ID: ${{ secrets.CHECKOUT_CANARY_TELEGRAM_CHAT_ID }}
+        run: checkout-canary run journeys/demo-shop.yml --output-dir results
+
+      - name: Update history and build the status page
+        run: |
+          RESULT_ARG=""
+          if [ -f results/result.json ]; then RESULT_ARG="--result results/result.json"; fi
+          checkout-canary status update $RESULT_ARG \
+            --data-dir status-data --site-dir site \
+            --title "Demo shop status" \
+            --note "A live example: checkout-canary checks a fake demo shop (not a real store) every 30 minutes."
+
+      - name: Add the demo shop to the site
+        run: cp -r tests/fixtures/shop/ok site/demo-shop
+
+      - name: Save run history (status-data branch only)
+        run: |
+          cd status-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No history changes."
+          else
+            git commit -m "Record run ${GITHUB_RUN_ID}"
+            git push origin status-data
+          fi
+
+      - name: Keep the full evidence (screenshots, trace) for 14 days
+        if: ${{ always() && !inputs.deploy_only }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: canary-results
+          path: results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload the site for GitHub Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: monitor
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  verdict:
+    # Turns the workflow run red when the journey failed, after the page has been published.
+    needs: [monitor, deploy]
+    if: ${{ always() && needs.monitor.outputs.journey_failed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "The checkout journey failed. See the 'Run the demo shop journey' step of the monitor job."
+          exit 1
