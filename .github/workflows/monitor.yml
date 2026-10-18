@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   monitor:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write # push run history to the status-data branch (never to main)
@@ -120,7 +120,7 @@ jobs:
 
   deploy:
     needs: monitor
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       pages: write
       id-token: write
@@ -136,7 +136,7 @@ jobs:
     # Turns the workflow run red when the journey failed, after the page has been published.
     needs: [monitor, deploy]
     if: ${{ always() && needs.monitor.outputs.journey_failed == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - run: |
           echo "The checkout journey failed. See the 'Run the demo shop journey' step of the monitor job."
