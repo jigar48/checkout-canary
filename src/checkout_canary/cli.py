@@ -3,8 +3,8 @@
 Exit codes: 0 = journey passed, 1 = journey failed, 2 = bad usage, invalid journey file, or the
 browser could not be started. Alerts never change the exit code.
 
-Optional failure alerts via environment variables: CHECKOUT_CANARY_TELEGRAM_TOKEN and
-CHECKOUT_CANARY_TELEGRAM_CHAT_ID.
+Optional environment variables: CHECKOUT_CANARY_TELEGRAM_TOKEN / _CHAT_ID (failure alerts),
+CHECKOUT_CANARY_USER_AGENT, CHECKOUT_CANARY_HEADER_NAME / _VALUE (see README).
 """
 
 import argparse
@@ -31,6 +31,7 @@ from checkout_canary.history import (
 from checkout_canary.journey import JourneyError, load_journey
 from checkout_canary.results import RunResult
 from checkout_canary.runner import RESULT_FILE, run_journey
+from checkout_canary.settings import SettingsError, settings_from_env
 from checkout_canary.statuspage import write_site
 
 LABELS = {"passed": "PASS", "failed": "FAIL", "skipped": "SKIP"}
@@ -133,7 +134,15 @@ def main(argv: Sequence[str] | None = None, env: Mapping[str, str] | None = None
         print(f"checkout-canary: {exc}", file=sys.stderr)
         return 2
     try:
-        result = run_journey(journey, args.output_dir)
+        settings = settings_from_env(env)
+    except SettingsError as exc:
+        print(f"checkout-canary: {exc}", file=sys.stderr)
+        return 2
+    if settings.has_secret_header:
+        print(f"Extra request header '{settings.header_name}' is enabled (value hidden).")
+    redirects: list[str] = []
+    try:
+        result = run_journey(journey, args.output_dir, settings, redirects)
     except PlaywrightError as exc:
         print(
             f"checkout-canary: could not run the browser: {str(exc).splitlines()[0]}\n"
@@ -142,6 +151,12 @@ def main(argv: Sequence[str] | None = None, env: Mapping[str, str] | None = None
         )
         return 2
     print_report(result, args.output_dir)
+    if redirects:
+        shown = ", ".join(sorted(set(redirects))[:3])
+        print(
+            f"Note: {len(set(redirects))} request(s) were redirected ({shown}). The extra "
+            "header is not sent on redirect hops; use the final URL in your journey if needed."
+        )
     if not result.passed:
         alert_on_failure(result, env)
     return 0 if result.passed else 1
