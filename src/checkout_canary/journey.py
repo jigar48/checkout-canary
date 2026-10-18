@@ -21,7 +21,9 @@ from pydantic import (
     model_validator,
 )
 
-ACTIONS = ("goto", "click", "fill", "expect_text", "expect_visible", "screenshot")
+ACTIONS = ("goto", "click", "fill", "expect_text", "expect_visible", "screenshot", "wait")
+MIN_WAIT_MS = 100
+MAX_WAIT_MS = 10_000
 SCREENSHOT_NAME = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
@@ -82,6 +84,12 @@ class ScreenshotStep(_Strict):
         return value
 
 
+class WaitStep(_Strict):
+    """Pause for a fixed time, for pages that need a moment after loading before they work."""
+
+    wait: int = Field(ge=MIN_WAIT_MS, le=MAX_WAIT_MS, description="milliseconds")
+
+
 def _action_of(step: Any) -> str | None:
     if isinstance(step, dict):
         keys = [key for key in step if key in ACTIONS]
@@ -97,7 +105,8 @@ Step = Annotated[
     | Annotated[FillStep, Tag("fill")]
     | Annotated[ExpectTextStep, Tag("expect_text")]
     | Annotated[ExpectVisibleStep, Tag("expect_visible")]
-    | Annotated[ScreenshotStep, Tag("screenshot")],
+    | Annotated[ScreenshotStep, Tag("screenshot")]
+    | Annotated[WaitStep, Tag("wait")],
     Discriminator(_action_of),
 ]
 
@@ -160,6 +169,8 @@ def describe_step(step: Any) -> tuple[str, str]:
         return "expect_visible", step.expect_visible
     if isinstance(step, ScreenshotStep):
         return "screenshot", step.screenshot
+    if isinstance(step, WaitStep):
+        return "wait", f"{step.wait} ms"
     raise TypeError(f"unsupported step type: {type(step).__name__}")
 
 

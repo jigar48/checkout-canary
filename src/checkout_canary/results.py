@@ -40,6 +40,7 @@ _PLAIN = {
     "expect_text": "checking that {target}",
     "expect_visible": "waiting for {target} to appear",
     "screenshot": "taking the screenshot '{target}'",
+    "wait": "waiting {target}",
 }
 
 
