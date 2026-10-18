@@ -31,7 +31,7 @@ output. I have not proven that nothing similar exists.
 - **Only run checkout-canary against sites you own or have written permission to test.**
 - It never places an order and never submits payment details. Journeys must stop before the payment
   step. The presets stop at the shipping or payment section and are tested to never touch "place order".
-- It identifies itself: `User-Agent: checkout-canary/<version> (+https://github.com/jigar48/checkout-canary)`.
+- It identifies itself: `User-Agent: checkout-canary/<version> (+https://github.com/jigar48/checkout-canary)` (you can set your own text with `CHECKOUT_CANARY_USER_AGENT`, but it should still say what the traffic is).
 - Steps run one after another, one browser, low request rate. It does not bypass CAPTCHAs or bot
   protection.
 - Do not put real passwords, card numbers or tokens in journey files. Tokens for alerts go in
@@ -181,6 +181,17 @@ inside GitHub Actions, a link to the run. It never contains fill values or secre
 effort: if sending fails, the problem is printed with the token redacted and the exit code stays the
 journey's own. Alerts go out on failure only. The alert code is a small `Notifier` interface
 ([`alerts.py`](src/checkout_canary/alerts.py)) so more channels can be added later.
+
+## Stores behind bot protection
+
+If your store answers the monitor with HTTP 403 or a "security verification" page, the store's bot
+protection (for example Cloudflare) is blocking it. checkout-canary never tries to evade that. If you
+own the store you can allow the monitor: set `CHECKOUT_CANARY_USER_AGENT` to a User-Agent you can
+recognise, and optionally send one secret request header (`CHECKOUT_CANARY_HEADER_NAME` and
+`CHECKOUT_CANARY_HEADER_VALUE`) that an allow rule on your side matches. The header goes only to the
+journey's own origins and is kept out of output, results, screenshots and traces (tested). Details,
+limits (redirects, Cloudflare's Bot Fight Mode cannot be skipped) and the rule to create:
+[docs/bot-protection.md](docs/bot-protection.md). Not yet tried against a real Cloudflare site.
 
 ## Presets (experimental)
 
