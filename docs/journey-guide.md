@@ -27,6 +27,7 @@ Each step has exactly one action:
 | `expect_text` | `selector` and `text` | the element contains the text |
 | `expect_visible` | selector | the element is visible |
 | `screenshot` | name | always; saves `screenshots/<name>.png` (letters, digits, `-`, `_`) |
+| `wait` | milliseconds (100 to 10000) | always; pauses for that long |
 
 Rules that trip people up:
 
@@ -90,6 +91,10 @@ Tips:
   missing (`'#checkout-button' was not visible after 10s`).
 - Keep `timeout_ms` generous for slow stores (10000 to 20000) but not so large that failures take
   minutes to report.
+- Use `wait` sparingly. Prefer an `expect_visible` or `expect_text` check that waits for a real
+  signal. A fixed wait is for pages whose scripts need a moment after the button already shows (for
+  example a Magento store that answers "Invalid Form Key" when "Add to cart" is clicked in the first
+  second): `- wait: 3000` before the click. It slows every run by that time.
 - One journey per file. Run several files from several commands or workflow jobs.
 
 ## 4. Run it and read the result

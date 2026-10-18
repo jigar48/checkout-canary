@@ -17,6 +17,7 @@ from checkout_canary.journey import (
     GotoStep,
     Journey,
     ScreenshotStep,
+    WaitStep,
     describe_step,
 )
 from checkout_canary.results import Evidence, RunResult, StepResult, build_result
@@ -120,6 +121,8 @@ def _execute(page: Page, step: object, journey: Journey, output_dir: Path) -> st
         expect(locator).to_contain_text(step.expect_text.text, timeout=timeout)
     elif isinstance(step, ExpectVisibleStep):
         expect(page.locator(step.expect_visible)).to_be_visible(timeout=timeout)
+    elif isinstance(step, WaitStep):
+        page.wait_for_timeout(step.wait)
     elif isinstance(step, ScreenshotStep):
         directory = output_dir / SCREENSHOT_DIR
         directory.mkdir(parents=True, exist_ok=True)
