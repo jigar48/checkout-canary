@@ -42,7 +42,7 @@ output. I have not proven that nothing similar exists.
 
 | Feature | State |
 | --- | --- |
-| `checkout-canary run <journey.yml>` with six step types, JSON result, failure screenshot and trace, exit codes 0/1/2 | Works. Tested against a local fake shop in CI. |
+| `checkout-canary run <journey.yml>` with seven step types, JSON result, failure screenshot and trace, exit codes 0/1/2 | Works. Tested against a local fake shop in CI. |
 | Telegram alert on failure | Works against a fake local Telegram server in tests. Never sent a real message yet. |
 | Static status page with last 30 runs + scheduled GitHub Actions workflow + demo shop on GitHub Pages | Page generation is tested. The **workflow has not run on GitHub yet**; it only runs after merge and a one-time setup ([docs/scheduling.md](docs/scheduling.md)). |
 | Magento 2 preset | **Experimental.** Tested only against a local fixture imitating Luma markup. |
@@ -128,7 +128,7 @@ checkout-canary status update --data-dir DIR --site-dir DIR [--result FILE] [--t
 ### Journey format in two examples
 
 A step is a mapping with exactly one action: `goto`, `click`, `fill`, `expect_text`,
-`expect_visible`, `screenshot`. Full reference and tips: [docs/journey-guide.md](docs/journey-guide.md).
+`expect_visible`, `screenshot`, `wait` (a pause of 100 to 10000 ms). Full reference and tips: [docs/journey-guide.md](docs/journey-guide.md).
 
 ```yaml
 name: Product page loads

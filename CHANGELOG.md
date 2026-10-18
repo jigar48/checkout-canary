@@ -5,6 +5,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Added
+- `wait` step: pause for 100 to 10000 ms, for pages that need a moment after loading.
 - `CHECKOUT_CANARY_USER_AGENT` to set the User-Agent.
 - `CHECKOUT_CANARY_HEADER_NAME` / `CHECKOUT_CANARY_HEADER_VALUE`: one secret request header sent only
   to the journey's own origins, kept out of output, results, screenshots and traces. See
