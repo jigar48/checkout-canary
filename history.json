@@ -1,15 +1,6 @@
 {
   "runs": [
     {
-      "id": "20261022T000212Z",
-      "started_at": "2026-10-22T00:02:12+00:00",
-      "passed": true,
-      "duration_ms": 1443,
-      "detail": null,
-      "run_url": "https://github.com/jigar48/checkout-canary/actions/runs/39697127704",
-      "screenshot": null
-    },
-    {
       "id": "20261022T045905Z",
       "started_at": "2026-10-22T04:59:05+00:00",
       "passed": true,
@@ -808,6 +799,15 @@
       "duration_ms": 1718,
       "detail": null,
       "run_url": "https://github.com/jigar48/checkout-canary/actions/runs/42889053420",
+      "screenshot": null
+    },
+    {
+      "id": "20261111T004235Z",
+      "started_at": "2026-11-11T00:42:35+00:00",
+      "passed": true,
+      "duration_ms": 1258,
+      "detail": null,
+      "run_url": "https://github.com/jigar48/checkout-canary/actions/runs/42933392291",
       "screenshot": null
     }
   ]
